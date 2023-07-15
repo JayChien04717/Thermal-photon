@@ -166,9 +166,5 @@ if __name__=="__main__":
     # end = time()
     # print(end-start)
 
-    a = BE_dist(300, 6e9)
-    b = BE_dist(4, 6e9)
-    c = BE_dist(0.8, 6e9)
-    print(power2dB(a/1e-3))
-    print((a/b))
+
 
