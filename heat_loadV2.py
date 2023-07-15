@@ -38,14 +38,15 @@ def JN_noise(temp, freq):
     k_b = 1.380649e-23      #Bloteman const
     h = 6.626070153e-34     #Plank const
     R = 50                  #Resistor, in microwave line commonly 50ohm
-    const = 4*k_b*T*R
+    const = 4*k_b*temp*R
     a = h*freq/(k_b*temp)
     b = np.exp(h*freq/(k_b*temp))-1 #會有inf的問題, np.isinf判斷
     s = const*a/b
     return np.array(s)
     
-def dB_calculator(dB):
-    """ Convert dB to how much loss. Convert function is power unit.
+def db2power(dB):
+    """ Convert dB to how power ratial. Convert function is power unit. Also means how 
+    much photon(1/A %) can transmit
      
     Parameters
     ----------
@@ -56,6 +57,17 @@ def dB_calculator(dB):
 
     A=10**(dB/10) 
     return 1/A
+def power2dB(power):
+    """ Convert power ratial to dB
+
+    Parameters
+    ----------
+    power:
+        how much power ratial 
+    
+    """
+    A = 10*np.log10(power)
+    return A
 
     
 def BE_dist(temp, freq):
@@ -99,8 +111,6 @@ def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
     
     
     """
-
-
     stage_check = {"4K":stage_4K, "800mK":stage_800mK, "100mK":stage_100mk, "10mK":stage_10mK}# each stage attenuator
     stage = [300,4,0.8,0.1,10e-3]
     #---------------------------------------------------#
@@ -131,7 +141,7 @@ def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
 
     for i, temp in enumerate(stage):
         if i < len(stage_check):
-            stage_noise_att[i,:] = JN_noise(temp, f)*dB_calculator(att_list[i])
+            stage_noise_att[i,:] = JN_noise(temp, f)*db2power(att_list[i])
 
 
     for i, temp in enumerate(stage):
@@ -156,4 +166,9 @@ if __name__=="__main__":
     # end = time()
     # print(end-start)
 
-    
+    a = BE_dist(300, 6e9)
+    b = BE_dist(4, 6e9)
+    c = BE_dist(0.8, 6e9)
+    print(power2dB(a/1e-3))
+    print((a/b))
+
