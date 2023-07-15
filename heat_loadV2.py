@@ -61,15 +61,16 @@ def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
 
     for i, temp in enumerate(stage):
         ax.plot(f, stage_noise[i],  color = color_list[i], label=f'{temp}K')
+
     #---------------------------------------------------#
     # After the attenuator thermal noise power spectrum
     stage.remove(10e-3) #mixing chamber no attenaution
     if stage_check["800mK"] == 0:
+        #if 800mK stage no attenuator, ignore 800mK
         del stage_check["800mK"]
         stage.remove(0.8)
         stage_noise_att=np.vstack([np.zeros(len(freq))]*(len(stage)))
     att_list=np.zeros(len(stage_check))
-
 
     for i in range(len(stage_check)):
         att_list[i] = np.sum(np.array(list(stage_check.values()))[::-1][:len(stage_check)])
@@ -80,7 +81,7 @@ def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
 
 
     for i, temp in enumerate(stage):
-            ax.plot(f, stage_noise_att[i],  color = color_list[i], label=f'{temp}K', linestyle="dashed")
+            ax.plot(f, stage_noise_att[i],  color = color_list[i], label=f'{temp}K att', linestyle="dashed")
 
 
     plt.axvline(1e10, linestyle=":")
@@ -93,12 +94,12 @@ def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
     pass
 
 
+
 if __name__=="__main__":
-    att=[0, 0, 20, 20, 0 ,20] # attenautor at 50K, 4K, 800mK, 100mK, 10mK
     f = np.linspace(1e6, 1e13, int(1e5))
     # start = time()
     calculate_thermalSA(20,0,20,20,f)  #4K, 800mK, 100mK, 10mK
     # end = time()
     # print(end-start)
 
- 
+    
