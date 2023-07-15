@@ -1,3 +1,16 @@
+'''
+This code is used for simulate the thermal photon power spectrum create form each dilution fridge tempmerature stage.
+Also, it consider the attenuator attenuate the power from upper stage thermal photon. So it can modified how much 
+attenuator place in each stage. Let upper thermal photon power spectrum is lower than 10mK thermal photon power spectrum.
+
+Future function:
+    1. add the coaxial cable induce heat, current flow induce heat
+    2. simulation the photon population at function noise_photon
+
+ref paper:https://epjquantumtechnology.springeropen.com/articles/10.1140/epjqt/s40507-019-0072-0
+Author: Jay Chien
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
@@ -10,29 +23,64 @@ def coaxial_heat(r_out, r_dielectirc,r_center,  T1, T2, length):
     heat_flow = (r_out+r_dielectirc+r_center)*(T1-T2)/length
     return heat_flow
 
-def JN_noise(T, freq):
-    k_b = 1.380649e-23
-    h = 6.626070153e-34
-    R = 50
+def JN_noise(temp, freq):
+    """This term return the Johnson-Nyquist noise 
+
+    Parameters
+    ----------
+    temp: 
+        Temperatire at which enviroment
+    freq: 
+        noise at which frequency
+        
+        
+    """
+    k_b = 1.380649e-23      #Bloteman const
+    h = 6.626070153e-34     #Plank const
+    R = 50                  #Resistor, in microwave line commonly 50ohm
     const = 4*k_b*T*R
-    a = h*freq/(k_b*T)
-    b = np.exp(h*freq/(k_b*T))-1 #會有inf的問題, np.isinf判斷
+    a = h*freq/(k_b*temp)
+    b = np.exp(h*freq/(k_b*temp))-1 #會有inf的問題, np.isinf判斷
     s = const*a/b
     return np.array(s)
     
 def dB_calculator(dB):
-    # in power unit
+    """ Convert dB to how much loss. Convert function is power unit.
+     
+    Parameters
+    ----------
+    dB: 
+        How much dB of attenuator or other resistor
+ 
+    """
+
     A=10**(dB/10) 
     return 1/A
 
     
-def BE_dist(freq, T):
+def BE_dist(temp, freq):
+    """ return the bose einstein distribution with temperature and frequecy
+    
+    Parameters
+    ----------
+    temp: 
+        Temperatire at which enviroment
+    freq: 
+        Frequency
+
+    """
     k_b = 1.380649e-23
     h = 6.626070153e-34
-    n_BE = np.exp(h*freq/(k_b*T))-1
-    return 1/n_BE
+    n_BE = 1/(np.exp(h*freq/(k_b*temp))-1)
+    return n_BE
 
 def noise_photon(freq, att):
+    ''' calculation the noise phton at i stage
+
+
+
+
+    '''
     stage = [300, 50, 4, 0.8, 0.1, 10e-3]
 
     A = np.zeros(len(att))
@@ -47,6 +95,12 @@ def noise_photon(freq, att):
     return noise
 
 def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
+    """ Calculation the thermal phton power spectrum
+    
+    
+    """
+
+
     stage_check = {"4K":stage_4K, "800mK":stage_800mK, "100mK":stage_100mk, "10mK":stage_10mK}# each stage attenuator
     stage = [300,4,0.8,0.1,10e-3]
     #---------------------------------------------------#
