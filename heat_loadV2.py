@@ -14,9 +14,22 @@ Author: Jay Chien
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
-from time import time
+import scipy.constants as sc
 
 def coaxial_heat(r_out, r_dielectirc,r_center,  T1, T2, length):
+    """_summary_
+
+    Args:
+        r_out (_type_): _description_
+        r_dielectirc (_type_): _description_
+        r_center (_type_): _description_
+        T1 (_type_): _description_
+        T2 (_type_): _description_
+        length (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     #T1 was upper stage, T2 was lower stage
     #r_out was thermal conductivities of outer conductor
 
@@ -35,14 +48,12 @@ def JN_noise(temp, freq):
         
         
     """
-    k_b = 1.380649e-23      #Bloteman const
-    h = 6.626070153e-34     #Plank const
     R = 50                  #Resistor, in microwave line commonly 50ohm
-    const = 4*k_b*temp*R
-    a = h*freq/(k_b*temp)
-    b = np.exp(h*freq/(k_b*temp))-1 #會有inf的問題, np.isinf判斷
-    s = const*a/b
-    return np.array(s)
+    const = 4*sc.k*temp*R
+    a = sc.h*freq/(sc.k*temp)
+    b = np.exp(sc.h*freq/(sc.k*temp))-1 #會有inf的問題, np.isinf判斷
+    JN_noise = const*a/b
+    return JN_noise
     
 def db2power(dB):
     """ Convert dB to how power ratial. Convert function is power unit. Also means how 
@@ -56,7 +67,7 @@ def db2power(dB):
     """
 
     A=10**(dB/10) 
-    return 1/A
+    return A
 def power2dB(power):
     """ Convert power ratial to dB
 
@@ -81,29 +92,26 @@ def BE_dist(temp, freq):
         Frequency
 
     """
-    k_b = 1.380649e-23
-    h = 6.626070153e-34
-    n_BE = 1/(np.exp(h*freq/(k_b*temp))-1)
+    n_BE = 1/(np.exp(sc.h*freq/(sc.k*temp))-1)
     return n_BE
 
 def noise_photon(freq, att):
     ''' calculation the noise phton at i stage
 
-
-
-
     '''
-    stage = [300, 50, 4, 0.8, 0.1, 10e-3]
+    stage = [50, 4, 0.8, 0.1, 10e-3]
 
     A = np.zeros(len(att))
     for i in range(len(att)):
-        A[i] = 10**(att[i]/10)
+        A[i] = db2power(att[i])
     noise = np.zeros(len(stage))
+    n_300 = BE_dist(300, freq)
+    
     for i, element in enumerate(stage):
-        n_300 = BE_dist(freq, 300)
-        noise[0]= n_300
-        if i != 0:
-            noise[i] = noise[i-1]/A[i] + (A[i]-1)/A[i]*BE_dist(freq, element)
+        if i == 0:
+            noise[i] = n_300/A[i] + (A[i]-1)/A[i]*BE_dist(element, freq)
+        else:
+            noise[i] = noise[i-1]/A[i] + (A[i]-1)/A[i]*BE_dist(element, freq)
     return noise
 
 def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
@@ -134,14 +142,16 @@ def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
         del stage_check["800mK"]
         stage.remove(0.8)
         stage_noise_att=np.vstack([np.zeros(len(freq))]*(len(stage)))
+
     att_list=np.zeros(len(stage_check))
 
     for i in range(len(stage_check)):
-        att_list[i] = np.sum(np.array(list(stage_check.values()))[::-1][:len(stage_check)])
+        att_list[i] = np.sum(np.array(list(stage_check.values())[::-1])[:len(stage_check)-i])
+
 
     for i, temp in enumerate(stage):
         if i < len(stage_check):
-            stage_noise_att[i,:] = JN_noise(temp, f)*db2power(att_list[i])
+            stage_noise_att[i,:] = JN_noise(temp, f)/db2power(att_list[i])
 
 
     for i, temp in enumerate(stage):
@@ -156,15 +166,14 @@ def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
     ax.set_ylim(1e-30, 1e-17)
     plt.show()
     pass
+    return att_list
 
 
 
 if __name__=="__main__":
     f = np.linspace(1e6, 1e13, int(1e5))
-    # start = time()
-    calculate_thermalSA(20,0,20,20,f)  #4K, 800mK, 100mK, 10mK
-    # end = time()
-    # print(end-start)
-
-
-
+    att = [0,0,0,20,20]
+    calculate_thermalSA(20, 0, 20, 20, f)
+    a = noise_photon(6e9, att)
+    
+    print(a)
