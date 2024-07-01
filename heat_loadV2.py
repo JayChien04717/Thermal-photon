@@ -156,14 +156,14 @@ def calculate_thermalSA(stage_4K, stage_800mK, stage_100mk, stage_10mK, freq):
 
     for i, temp in enumerate(stage):
             ax.plot(f, stage_noise_att[i],  color = color_list[i], label=f'{temp}K att', linestyle="dashed")
-
-
+    ax.plot(f, sum(stage_noise_att)+stage_noise[-1], label='effect')
     plt.axvline(1e10, linestyle=":")
     ax.legend()
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlim(1e6, 1e13)
     ax.set_ylim(1e-30, 1e-17)
+    
     plt.show()
     pass
     return att_list
@@ -174,6 +174,6 @@ if __name__=="__main__":
     f = np.linspace(1e6, 1e13, int(1e5))
     att = [0,0,0,20,20]
     calculate_thermalSA(20, 0, 20, 20, f)
+
+
     a = noise_photon(6e9, att)
-    
-    print(a)
