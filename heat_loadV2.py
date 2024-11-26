@@ -133,8 +133,7 @@ def calculate_thermalSA(stage_50K, stage_4K, stage_800mK, stage_100mk, stage_20m
     # The original thermal noise power spectrum
     stage_noise = np.vstack([np.zeros(len(freq))]*len(stage))
 
-    fig, ax = plt.subplots(figsize=(8, 8))
-
+    fig, ax = plt.subplots(figsize=(12, 8))
     color_list = ["b", "g", "c", "m", "y", "k"]
 
     for i, temp in enumerate(stage):
@@ -164,24 +163,26 @@ def calculate_thermalSA(stage_50K, stage_4K, stage_800mK, stage_100mk, stage_20m
 
     ax.plot(freq, JN_noise(efft_temp, freq),
             label=f'JN noise at {efft_temp*1e3:.0f}mK', ls='-.', lw=3)
-    ax.fill_between(freq, JN_noise(efft_temp-0.01, freq),
-                    JN_noise(efft_temp+0.01, freq), alpha=0.3)
-    ax.axvline(interest_freq, linestyle="--")
+    # ax.fill_between(freq, JN_noise(efft_temp-0.01, freq),
+    #                 JN_noise(efft_temp+0.01, freq), alpha=0.3)
+    ax.axvline(interest_freq, linestyle="--", lw=2)
     plt.title(
         f'Effective temperature at {interest_freq/1e9:.2f} GHz = {efft_temp*1e3:.0f}mK')
-    ax.legend()
+
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_ylabel('Power')
     ax.set_xlabel('Frequency [Hz]')
     ax.set_xlim(5e7, 1e13)
     ax.set_ylim(1e-30, 1e-17)
+    plt.legend(bbox_to_anchor=(1.02, 1), borderaxespad=0)
+    plt.tight_layout()
     plt.show()
 
 
 if __name__ == "__main__":
     f = np.arange(0, 1e13, 5e7)
     # 50K, 4K, 800mK, 100mK, 20mK
-    calculate_thermalSA(11, 11, 11, 11, 21, f, 5e9)
+    calculate_thermalSA(11, 11, 11, 11, 0, f, 0.3e9)
     # a = noise_photon(6e9, [0, 11, 11, 11, 11, 21])
     # print(a)
